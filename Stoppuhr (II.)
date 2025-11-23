@@ -1,0 +1,47 @@
+#include "mfs.h"
+
+int main(){
+  init();
+  initMFS();
+  Serial.begin(9600);
+
+  pinMode(A1, INPUT);
+  pinMode(A3, INPUT);
+
+  uint32_t time_ms = 0;      // time display in Arduino board
+  uint32_t time_ms_lastrun = 0;   
+  uint8_t isRunning = 0;
+  uint8_t buttonA1_old = digitalRead(A1);    //am Anfang = 1
+  uint8_t buttonA1;
+  uint32_t time_start;
+
+  while (1) {
+    buttonA1 = digitalRead(A1);
+    //Serial.println(millis());
+
+    if ((isRunning == 0) && (buttonA1 < buttonA1_old)) {
+      Serial.println("GO");
+      time_start = millis();
+      time_ms_lastrun = time_ms;     // time_ms_lastrun = latest time written in display
+      isRunning = 1;
+    }
+
+    else if ((isRunning == 1) && (buttonA1 < buttonA1_old)) {
+      Serial.println("STOP");
+      isRunning = 0;
+    }
+
+    if(isRunning) {
+      time_ms = millis() - time_start + time_ms_lastrun;  
+      // Beispiel= 5-10  35-38   time_ms = 38-35+5 = 8 
+    }
+
+    if(digitalRead(A3) == 0) {
+      isRunning = 0;
+      time_ms = 0;
+    }
+
+    writeDecToSegment(time_ms);
+    buttonA1_old = buttonA1; 
+  }
+}
