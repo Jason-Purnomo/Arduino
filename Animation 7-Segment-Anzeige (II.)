@@ -1,0 +1,92 @@
+#include <arduino.h>
+#include "mfs.h"
+
+int main(){
+  init();
+  initMFS();
+
+  pinMode(A1, INPUT);
+
+  uint8_t v[6] = { 0b11111100, 0b11111001, 0b11110011, 0b11100111, 0b11001111, 0b11011110 };  //Laut der Aufgabe, 0 = leuchten, 1 = aus
+  //Hier bedeutet, dass für v[1]: ab, v[2]: bc, v[3]: cd, v[4]: de, v[5]: ef und v[6]: af leuchtet
+  uint8_t i = 0;  //Array
+  uint8_t d[4] = { 0b00001000, 0b00000001, 0b00001111, 0b00000110 };
+  uint8_t j = 0;  //Array
+  uint16_t delta;  //zum Einstellen der Animationsgeschwindigkeit
+  uint8_t buttonA1;
+  uint8_t buttonA1_old = digitalRead(A1);  //1 = offen, 0 = gedruckt
+  uint8_t counterA1 = 0;
+
+  while (1) {
+    buttonA1 = digitalRead(A1);
+    if (buttonA1 > buttonA1_old) {		//d.h. Beim Loslassen
+      counterA1++;
+      if (counterA1 > 4) {
+        counterA1 = 0;
+      }
+    }
+    buttonA1_old = buttonA1;
+
+    switch (counterA1) {
+      case 0:
+        i++;
+        if (i > 5) {
+          i = 0;
+        }
+        j = 0;
+        delta = 120;
+        digitalWrite(LATCH_DIO, LOW);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, v[i]);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, d[j]);
+        digitalWrite(LATCH_DIO, HIGH);
+        delay(delta);
+        break;
+      case 1:
+        i++;
+        if (i > 5) {
+          i = 0;
+        }
+        j = 1;
+        delta = 120;
+        digitalWrite(LATCH_DIO, LOW);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, v[i]);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, d[j]);
+        digitalWrite(LATCH_DIO, HIGH);
+        delay(delta);
+        break;
+      case 2:
+        i++;
+        if (i > 5) {
+          i = 0;
+        }
+        j = 2;
+        delta = 180;
+        digitalWrite(LATCH_DIO, LOW);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, v[i]);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, d[j]);
+        digitalWrite(LATCH_DIO, HIGH);
+        delay(delta);
+        break;
+      case 3:
+        i++;
+        if (i > 5) {
+          i = 0;
+        }
+        j = 3;
+        delta = 80;
+        digitalWrite(LATCH_DIO, LOW);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, v[i]);
+        shiftOut(DATA_DIO, CLK_DIO, MSBFIRST, d[j]);
+        digitalWrite(LATCH_DIO, HIGH);
+        delay(delta);
+   	    break;
+    default:
+      digitalWrite(LATCH_DIO, LOW);
+      shiftOut(LATCH_DIO, CLK_DIO, MSBFIRST, 0b11111111);
+      shiftOut(LATCH_DIO, CLK_DIO, MSBFIRST, 0b00001111);
+      digitalWrite(LATCH_DIO, HIGH);
+      i = 0;
+      break;
+    }
+  }  
+}
