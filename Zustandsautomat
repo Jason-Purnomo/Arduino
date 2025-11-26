@@ -1,0 +1,106 @@
+#include "mfs.h"
+#define OFF 0
+#define DARK 1
+#define BRIGHT 2
+#define BLINK 3
+#define TIME_PRESS 1000
+
+
+int main() {
+  init();
+  initMFS();
+  Serial.begin(9600);
+ 
+  pinMode(10, OUTPUT);
+  pinMode(A1, INPUT);
+  uint32_t printTime = 0;
+  uint32_t TIME_PRESS_START, TIME_PRESS_STOP;
+  uint8_t buttonA1;
+  uint8_t buttonA1_old = digitalRead(A1);
+  uint8_t counterA1_short = 0;
+  uint8_t counterA1_long = 0;
+  uint8_t state = 0;
+  uint8_t ledBlink = 0;
+  uint32_t blinkTime = 0;
+ 
+  while (1) {
+    buttonA1 = digitalRead(A1);
+  
+    if (buttonA1 < buttonA1_old) {
+      TIME_PRESS_START = millis();
+    }
+    if (buttonA1 > buttonA1_old) {
+      TIME_PRESS_STOP = millis();
+      if ((TIME_PRESS_STOP - TIME_PRESS_START) < TIME_PRESS) {
+        counterA1_short++;
+        Serial.println("SHORT PRESS");
+      } else {
+        counterA1_long++;
+        Serial.println("LONG PRESS");
+      }
+    }
+
+    buttonA1_old = buttonA1;
+
+    switch (state) {
+      case OFF:
+        if (counterA1_long > 0) {
+          state = DARK;
+          Serial.println("...Dark");
+        }
+        analogWrite(10, 255);
+        break;
+      case DARK:
+        if (counterA1_long > 0) {
+          state = OFF;
+          Serial.println("...OFF");
+        }
+        if (counterA1_short > 0) {
+          state = BRIGHT;
+          Serial.println("...BRIGHT");
+        }
+        analogWrite(10, 230);
+        break;
+      case BRIGHT:
+        if (counterA1_long > 0) {
+          state = OFF;
+          Serial.println("...OFF");
+        }
+        if (counterA1_short > 0) {
+          state = BLINK;
+          Serial.println("...BLINK");
+        }
+        analogWrite(10, 0);
+        break;
+      case BLINK:
+        if (counterA1_long > 0) {
+          state = OFF;
+          Serial.println("...OFF");
+        }
+        if (counterA1_short > 0) {
+          state = DARK;
+          Serial.println("...DARK");
+        }
+        if (millis() > blinkTime + 100) {
+          blinkTime = millis();
+          if (ledBlink == 0) {
+            ledBlink = 1;
+            analogWrite(10, 255);
+          } else {
+            ledBlink = 0;
+            analogWrite(10, 0);
+          }
+        }
+        break;
+    }
+
+    if (millis() > printTime + 500) {
+      printTime = millis();
+      Serial.print("State: ");
+      Serial.println(state);
+    }
+
+    counterA1_short = 0;
+    counterA1_long = 0;
+  }
+}
